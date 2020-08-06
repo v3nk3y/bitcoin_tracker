@@ -10,11 +10,13 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   var selectedCurrency = 'USD';
+  String currentPrice = '?';
+  CoinData coinData = CoinData();
 
   DropdownButton<String> androidDropDownButton() {
     List<DropdownMenuItem<String>> dropDownList = [];
 
-    for (String currency in currenciesList) {
+    for (String currency in primaryCurrenciesList) {
       dropDownList.add(
         DropdownMenuItem(
           child: Text(currency),
@@ -26,9 +28,11 @@ class _PriceScreenState extends State<PriceScreen> {
     return DropdownButton<String>(
       value: selectedCurrency,
       items: dropDownList,
-      onChanged: (value) {
+      onChanged: (value) async {
+        String latestPrice = await coinData.getCurrentPrice(value);
         setState(() {
           selectedCurrency = value;
+          currentPrice = latestPrice;
         });
       },
     );
@@ -37,15 +41,21 @@ class _PriceScreenState extends State<PriceScreen> {
   CupertinoPicker iOSPicker() {
     List<Text> pickerList = [];
 
-    for (String currency in currenciesList) {
+    for (String currency in primaryCurrenciesList) {
       pickerList.add(Text(currency));
     }
 
     return CupertinoPicker(
       itemExtent: 32.0,
       backgroundColor: Colors.lightBlue,
-      onSelectedItemChanged: (selectedIndex) {
+      onSelectedItemChanged: (selectedIndex) async {
         print(selectedIndex);
+        String latestPrice = await coinData
+            .getCurrentPrice(primaryCurrenciesList[selectedIndex]);
+        setState(() {
+          currentPrice = latestPrice;
+          selectedCurrency = primaryCurrenciesList[selectedIndex];
+        });
       },
       children: pickerList,
     );
@@ -55,7 +65,7 @@ class _PriceScreenState extends State<PriceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('🤑 Coin Ticker'),
+        title: Text('Coin Ticker'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -72,7 +82,7 @@ class _PriceScreenState extends State<PriceScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  '1 BTC = ? USD',
+                  '1 BTC = $currentPrice $selectedCurrency',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.0,
